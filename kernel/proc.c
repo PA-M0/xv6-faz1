@@ -5,6 +5,23 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "topStruct.h"
+
+//struct top {
+//    long uptime;
+//    int total_process;
+//    int running_process;
+//    int sleeping_process;
+//    struct proc_info p_list[NPROC];
+//};
+//struct proc_info{
+//    char name[16];
+//    int pid;
+//    int ppid;
+//    enum procstate state;
+//};
+struct top topp;
+struct proc_info info;
 
 
 struct cpu cpus[NCPU];
@@ -34,7 +51,7 @@ void
 proc_mapstacks(pagetable_t kpgtbl)
 {
   struct proc *p;
-  
+
   for(p = proc; p < &proc[NPROC]; p++) {
     char *pa = kalloc();
     if(pa == 0)
@@ -49,7 +66,7 @@ void
 procinit(void)
 {
   struct proc *p;
-  
+
   initlock(&pid_lock, "nextpid");
   initlock(&wait_lock, "wait_lock");
   for(p = proc; p < &proc[NPROC]; p++) {
@@ -94,7 +111,7 @@ int
 allocpid()
 {
   int pid;
-  
+
   acquire(&pid_lock);
   pid = nextpid;
   nextpid = nextpid + 1;
@@ -237,7 +254,7 @@ userinit(void)
 
   p = allocproc();
   initproc = p;
-  
+
   // allocate one user page and copy initcode's instructions
   // and data into it.
   uvmfirst(p->pagetable, initcode, sizeof(initcode));
@@ -373,7 +390,7 @@ exit(int status)
 
   // Parent might be sleeping in wait().
   wakeup(p->parent);
-  
+
   acquire(&p->lock);
 
   p->xstate = status;
@@ -429,7 +446,7 @@ wait(uint64 addr)
       release(&wait_lock);
       return -1;
     }
-    
+
     // Wait for a child to exit.
     sleep(p, &wait_lock);  //DOC: wait-sleep
   }
@@ -447,7 +464,7 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  
+
   c->proc = 0;
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
@@ -537,7 +554,7 @@ void
 sleep(void *chan, struct spinlock *lk)
 {
   struct proc *p = myproc();
-  
+
   // Must acquire p->lock in order to
   // change p->state and then call sched.
   // Once we hold p->lock, we can be
@@ -616,7 +633,7 @@ int
 killed(struct proc *p)
 {
   int k;
-  
+
   acquire(&p->lock);
   k = p->killed;
   release(&p->lock);
@@ -653,20 +670,21 @@ either_copyin(void *dst, int user_src, uint64 src, uint64 len)
   }
 }
 
+static char *states[] = {
+        [UNUSED]    "unused",
+        [USED]      "used",
+        [SLEEPING]  "sleeping",
+        [RUNNABLE]  "runnable",
+        [RUNNING]   "running",
+        [ZOMBIE]    "zombie"
+};
 // Print a process listing to console.  For debugging.
 // Runs when user types ^P on console.
 // No lock to avoid wedging a stuck machine further.
 void
 procdump(void)
 {
-  static char *states[] = {
-  [UNUSED]    "unused",
-  [USED]      "used",
-  [SLEEPING]  "sleep ",
-  [RUNNABLE]  "runble",
-  [RUNNING]   "run   ",
-  [ZOMBIE]    "zombie"
-  };
+
   struct proc *p;
   char *state;
 
@@ -684,14 +702,82 @@ procdump(void)
 }
 
 
-int syshistory(){
+int get_top_info(void){
+
+
+
+//    consputc(t.running_process);
+    int unusedCount = 0;
+    int sleepCount = 0;
+    int runningCount = 0;
+
+    for (int i = 0; i < NPROC; i++) {
+        if(proc[i].state == UNUSED){
+            unusedCount++;
+        }
+        if(proc[i].state == SLEEPING){
+            sleepCount++;
+        }
+        if(proc[i].state == RUNNING){
+            runningCount++;
+        }
+
+
+    }
+    int uptime = 0;
+    uptime = sys_uptime();
+    topp.uptime = uptime;
+    topp.total_process = NPROC - unusedCount;
+    topp.running_process = runningCount;
+    topp.sleeping_process = sleepCount;
+    printf("\nuptime:%d seconds",topp.uptime);
+    printf("\nTotal process: %d\n", topp.total_process);
+    printf("Running process: %d\n",   topp.running_process);
+    printf("Sleeping process: %d\n", topp.sleeping_process);
+
+
+//
+//    printf("\nname : %d\n", proc->name);
+//    printf("\npid : %d\n", proc->pid);
+//    printf("\nstate : %d\n", proc->state);
+//
+//    printf("killed : %d\n", proc->killed);
+//    for (int i = 0; i < 16; ++i) {
+//        consputc(proc->name[i]);
+//    }
+
+    struct proc *pointer;
+    char *state;
+
+
+    printf("process data:\n");
+    printf("name    PID    state        PPID\n" );
+    for(pointer = proc; pointer < &proc[NPROC]; pointer++){
+        if(pointer->state == UNUSED)
+            continue;
+        if(pointer->state >= 0 && pointer->state < NELEM(states) && states[pointer->state])
+            state = states[pointer->state];
+        else
+            state = "???";
+
+
+        info.pid = pointer->pid;
+        printf("%s      %d      %s",  pointer->name, info.pid, state );
+        if(pointer->parent != 0){
+
+            info.ppid = pointer->parent->pid;
+            printf("        %d", info.ppid);
+        }
+        else{
+            info.ppid = 0;
+            printf("    %d", info.ppid);
+        }
+        printf("\n");
+    }
+
+
 
     return 0;
 
 }
-//
-//int gettop(struct top_struct* top_list) {
-//    // پیمایش جدول فرآیندها و افزودن اطلاعات به top_list
-//    // return تعداد فرآیندها یا -1 در صورت خطا
-//}
 

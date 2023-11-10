@@ -121,12 +121,15 @@ sys_history(void)
     }
 
 
-
-
-
-
-
+    printf("\n");
 
     return err;
+}
+uint64
+sys_top(void)
+{
+    get_top_info();
+
+    return 0;
 }
 
