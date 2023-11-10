@@ -39,6 +39,8 @@
 struct historyBufferArray historyBuf;
 int index = 0;
 int row = 0;
+uint last_com = 0;
+uint next_com = 0;
 
 void printToConsole(void)
 {
@@ -49,16 +51,19 @@ void printToConsole(void)
 
 }
 void call_sys_history(void){
+    if(historyBuf.lastCommandIndex == 15)
+        historyBuf.lastCommandIndex = 0;
+
     int size = 0;
     for (int i = 0; historyBuf.current_cm[i] != '\n' ; ++i) {
         size++;
     }
 
+
     historyBuf.lengthsArr[row] = size;
 
     for (int i = 0; i < size ; i++) {
         historyBuf.bufferArr[row][i]= historyBuf.current_cm[i];
-
     }
 
 
@@ -195,12 +200,26 @@ consoleintr(int c)
     }
     break;
   default:
-    if(c != 0 && cons.e-cons.r < INPUT_BUF_SIZE){
+      if(c == '\x41'){
+
+          last_com = (historyBuf.lastCommandIndex - 1);
+          for (int i = 0; i < historyBuf.lengthsArr[last_com]; i++) {
+              consputc(historyBuf.bufferArr[last_com][i]);
+          }
+      }
+          else if(c == '\x42'){
+            next_com = historyBuf.lastCommandIndex + 2;
+              for (int i = 0; i < historyBuf.lengthsArr[next_com]; i++) {
+                  consputc(historyBuf.bufferArr[next_com][i]);
+              }
+          }
+    else if(c != 0 && cons.e-cons.r < INPUT_BUF_SIZE){
       c = (c == '\r') ? '\n' : c;
+
 
       historyBuf.current_cm[index] = c;
       index++;
-
+      consputc(c);
       // echo back to the user.
 
 
