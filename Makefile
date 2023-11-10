@@ -132,6 +132,8 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
+	$U/_history\
+
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
@@ -172,3 +174,4 @@ qemu-gdb: $K/kernel .gdbinit fs.img
 	$(QEMU) $(QEMUOPTS) -S $(QEMUGDB)
 
 # sudo docker run -it --rm -v $(pwd):/home/xv6/xv6-riscv -p 12345:12345 wtakuo/xv6-env
+# /code/ClionProjects/xv6-riscv/xv6-faz1/xv6-faz1

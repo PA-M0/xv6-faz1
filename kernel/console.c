@@ -21,16 +21,58 @@
 #include "riscv.h"
 #include "defs.h"
 #include "proc.h"
+#include "historyBuffer.h"
+//#include "../user/user.h"
+
 
 #define BACKSPACE 0x100
 #define C(x)  ((x)-'@')  // Control-x
 #define MAX_HISTORY 16
+#define INPUT_BUF_SIZE 128
 
 //
 // send one character to the uart.
 // called by printf(), and to echo input characters,
 // but not from write().
 //
+
+struct historyBufferArray historyBuf;
+int index = 0;
+int row = 0;
+
+void printToConsole(void)
+{
+//    consputc(historyBufArr.current_cm[index]);
+//    for (int i = 0; i < INPUT_BUF_SIZE; ++i) {
+//        consputc(historyBufArr.current_cm[i]);
+//    }
+
+}
+void call_sys_history(void){
+    int size = 0;
+    for (int i = 0; historyBuf.current_cm[i] != '\n' ; ++i) {
+        size++;
+    }
+
+    historyBuf.lengthsArr[row] = size;
+
+    for (int i = 0; i < size ; i++) {
+        historyBuf.bufferArr[row][i]= historyBuf.current_cm[i];
+
+    }
+
+
+
+
+
+
+
+
+
+
+    row++;
+}
+
 void
 consputc(int c)
 {
@@ -138,6 +180,8 @@ consoleintr(int c)
 {
   acquire(&cons.lock);
 
+
+
   switch(c){
   case C('P'):  // Print process list.
     procdump();
@@ -151,6 +195,7 @@ consoleintr(int c)
     break;
   case C('H'): // Backspace
   case '\x7f': // Delete key
+    index--;
     if(cons.e != cons.w){
       cons.e--;
       consputc(BACKSPACE);
@@ -160,8 +205,11 @@ consoleintr(int c)
     if(c != 0 && cons.e-cons.r < INPUT_BUF_SIZE){
       c = (c == '\r') ? '\n' : c;
 
+      historyBuf.current_cm[index] = c;
+      index++;
+
       // echo back to the user.
-      consputc(c);
+
 
       // store for consumption by consoleread().
       cons.buf[cons.e++ % INPUT_BUF_SIZE] = c;
@@ -169,14 +217,26 @@ consoleintr(int c)
       if(c == '\n' || c == C('D') || cons.e-cons.r == INPUT_BUF_SIZE){
         // wake up consoleread() if a whole line (or end-of-file)
         // has arrived.
+        index = 0;
+        call_sys_history();
+        historyBuf.lastCommandIndex++;
+
+
+
+
         cons.w = cons.e;
         wakeup(&cons.r);
       }
     }
     break;
   }
+
+
+
+
   
   release(&cons.lock);
+  //  printf(cons.w);
 }
 
 void
@@ -194,30 +254,23 @@ consoleinit(void)
 
 
 
-struct historyBufferArray {
-    char bufferArr[MAX_HISTORY][INPUT_BUF];
-    uint lengthsArr[MAX_HISTORY];
-    uint lastCommandIndex;
-    int numOfCommandsInMem;
-    int currentHistory;
-};
 
-extern struct historyBufferArray historyBuf;
 
-int sys_history(void) {
-    int historyid;
-    if (argint(0, &historyid) < 0 || historyid < 1 || historyid > historyBuf.numOfCommandsInMem) {
-        return -1;  // Error: Invalid history ID
-    }
-
-    // Calculate the actual index in historyBuf based on historyid
-    int index = (historyBuf.lastCommandIndex - historyid + historyBuf.numOfCommandsInMem) % MAX_HISTORY;
-    if (historyBuf.numOfCommandsInMem <= MAX_HISTORY) {
-        index = (index + 1) % MAX_HISTORY;
-    }
-
-    // Print the requested command
-    cprintf("requested command: %s\n", historyBuf.bufferArr[index]);
-
-    return 0;  // Successful system call execution
-}
+//chat GPT=======================================================================
+//int sys_history(void) {
+//    int historyid;
+//    if (argint(0, &historyid) < 0 || historyid < 1 || historyid > historyBuf.numOfCommandsInMem) {
+//        return -1;  // Error: Invalid history ID
+//    }
+//
+//    // Calculate the actual index in historyBuf based on historyid
+//    int index = (historyBuf.lastCommandIndex - historyid + historyBuf.numOfCommandsInMem) % MAX_HISTORY;
+//    if (historyBuf.numOfCommandsInMem <= MAX_HISTORY) {
+//        index = (index + 1) % MAX_HISTORY;
+//    }
+//
+//    // Print the requested command
+//    cprintf("requested command: %s\n", historyBuf.bufferArr[index]);
+//
+//    return 0;  // Successful system call execution
+//}

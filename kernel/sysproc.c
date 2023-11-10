@@ -5,6 +5,8 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "historyBuffer.h"
+
 
 uint64
 sys_exit(void)
@@ -93,5 +95,38 @@ sys_uptime(void)
 uint64
 sys_history(void)
 {
-    //MY CODE------------------------------------------------------------------------------------
+   // struct syshistory *history;
+
+    int historyNum;
+    argint(0, &historyNum);
+    int err = 0;
+//    printf("hellooooo\n");
+
+    int target = 0;
+//    printf("[%d]", historyBuf.lastCommandIndex);
+    target = historyBuf.lastCommandIndex - historyNum;
+//    printf(" targer: %d \n", target);
+//    for (int i = 0; i < 16 ; ++i) {
+//        for (int j = 0; j < 128 ; ++j) {
+//            consputc(historyBuf.bufferArr[i][j]);
+//
+//        }
+//        printf(" ");
+
+       // consputc(historyBuf.bufferArr[5][i]);
+//    }
+    for (int i = 0; i < 128; ++i) {
+        consputc(historyBuf.bufferArr[target-1][i]);
+
+    }
+
+
+
+
+
+
+
+
+    return err;
 }
+

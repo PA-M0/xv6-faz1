@@ -681,3 +681,10 @@ procdump(void)
     printf("\n");
   }
 }
+
+
+int syshistory(){
+
+    return 0;
+
+}
