@@ -9,6 +9,6 @@ struct historyBufferArray{
     int currentHistory;
     char current_cm [128];//current command
     int id;
-} ;
+};
 
 extern struct historyBufferArray historyBuf;

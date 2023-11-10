@@ -62,16 +62,9 @@ void call_sys_history(void){
     }
 
 
-
-
-
-
-
-
-
-
     row++;
 }
+
 
 void
 consputc(int c)
@@ -256,7 +249,7 @@ consoleinit(void)
 
 
 
-//chat GPT=======================================================================
+
 //int sys_history(void) {
 //    int historyid;
 //    if (argint(0, &historyid) < 0 || historyid < 1 || historyid > historyBuf.numOfCommandsInMem) {

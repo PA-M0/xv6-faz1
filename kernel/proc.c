@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "defs.h"
 
+
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
@@ -688,3 +689,9 @@ int syshistory(){
     return 0;
 
 }
+//
+//int gettop(struct top_struct* top_list) {
+//    // پیمایش جدول فرآیندها و افزودن اطلاعات به top_list
+//    // return تعداد فرآیندها یا -1 در صورت خطا
+//}
+
